@@ -1,0 +1,146 @@
+/*GENERALES*/
+/*@media screen and (min-width: 1270px) {
+		.cuerpo {
+			max-width: 950px;
+		}		
+	}*/
+
+/*CABECERA*/
+/*FIN CABECERA*/
+
+/*MENÚ*/	
+/*FIN MENÚ*/
+
+	/*MENÚ ASIDE*/
+		@media screen and (max-width: 733px){
+			aside.vertical  {					
+				padding: 0px; 
+			}	
+		}
+		@media screen and (max-width: 534px){
+			aside.vertical > ul > li > a > img{
+				width: 110%;
+			}
+		}
+		@media screen and (max-width: 481px){
+			aside.vertical #TitleMenuAside{
+				font-size: 10px;
+				color: black;
+				text-shadow: none;
+			}
+		}
+		@media screen and (max-width: 334px){
+			aside.vertical #TitleMenuAside{
+				font-size: 8px;
+			}
+		}
+	/*FIN MENU ASIDE*/
+
+
+ /*FOOTER*/
+	@media screen and (max-width: 316px) {
+		#socialFooter{
+			font-size: 15px;
+		}
+	}
+/*FIN FOOTER*/
+
+/*PAG INICIAL*/
+	@media screen and (max-width: 480px) {
+		.imgPerfil img, .imgPerfilEng img{
+			width: 80%;
+			margin-right: 5%;
+		}
+	
+	}
+/*FIN PAG INICIAL*/	
+	
+/*ANIMACIÓN SIMULACIÓN*/
+	@media screen and (max-width: 1200px){
+			.videosbox, .videosboxS, .videosboxMAA{
+				display: block;
+				width: 95%;
+				height: auto;
+			}
+		
+		.rightControl{
+			width: auto;
+		}
+	}
+	/*youtube*/
+	@media screen and (max-width: 1200px){
+		#videoYouTube iframe, #videoYouTubeIni iframe{
+			height: 380px;
+		}
+		#videoYouTube-DVJ iframe{
+			height: 330px;
+			
+		}
+	}
+	@media screen and (max-width: 680px){
+		#videoYouTube iframe, #videoYouTubeIni iframe, #videoYouTube-DVJ iframe{
+			height: 250px;
+		}
+	}
+	@media screen and (min-width: 1201px){
+		#videoYouTube iframe{
+			height: 230px;
+		}
+	}
+	@media screen and (min-width: 1290px){
+		#videoYouTube iframe{
+			height: 250px;
+		}
+	}
+	@media screen and (min-width: 1290px){
+		#videoYouTubeIni iframe, #videoYouTube-DVJ iframe{
+			height: 450px;
+		}
+	}
+	@media screen and (min-width: 1201px){
+		#videoYouTubeIni iframe, #videoYouTube-DVJ iframe{
+			height: 430px;
+		}
+	}
+	
+	/*Interacción*/
+	@media screen and (max-width: 1000px){
+		.CanvasSimPeque, .CanvasSpecial{
+			width: 80%;
+		}
+	}
+	
+/*FIN ANIMACIÓN SIMULACIÓN*/
+
+/*CANVAS TIC-TAC-TOE*/
+	@media screen and (max-width: 1018px){
+		#playersbox{
+			display: block;
+			width: 95%;
+			height: auto;
+		}
+		#tablerobox{
+			width: 95%;			
+		}
+		#player1{
+			display: inline-table;
+			width: 48%;			
+		}
+		#player2{
+			display: inline-table;
+			border-top: none;
+			border-left: 1px solid #ccc;
+			width: 48%;
+		}		
+	}
+/*FIN CANVAS TIC-TAC-TOE*/
+
+/*CONTACTO*/
+	@media screen and (max-width: 733px){
+		#formcontact, #mapcontact{
+			width: 100%;
+			display: block;
+			vertical-align: top;
+			
+		}	
+	}

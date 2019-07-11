@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset=utf-8 />
+	<meta name="description" content="Clara Peñalva's personal website" />
+	<title>Clara Peñalva</title>
+	<link rel="shortcut icon" href="../pics/favicon.png"/>
+	<script src="http://code.jquery.com/jquery-latest.js"></script>
+	<link rel="stylesheet" type="text/css"  media="only screen and (min-device-width: 500px)"  href="../style.css">
+	<link rel="stylesheet" type="text/css" href="../style_resize.css">
+	<link rel="stylesheet" type="text/css"  media="only screen and (max-device-width: 500px)"  href="../style_movil.css">
+	<link rel ="stylesheet" type="text/css" href="../fonts.css"/>
+	<script type="text/javascript" src="../js/AsideTop.js" language="javascript"> </script>
+	<script type="text/javascript" src="../js/scrollUp.js" language="javascript"> </script>	
+	<script type="text/javascript">
+	//Funciones estéticas para mostrar los colores seleccionados
+	function muestraColor(id){
+		document.getElementById(id).hidden = false;
+	}
+	function escondeColor(id){
+		document.getElementById(id).hidden = true;
+	}
+	//variables	
+	var c;
+	var ctx;	
+	var tamCasilla;
+	var espacioTexto;
+	var jugadorAct;
+	var casillas;
+	var ganado;
+	var fin;
+	var casillasOcupadas;
+	//función de carga inicial
+	function inicioPartida(){
+		
+		//se comprueba que esté todo rellenado
+		if(document.getElementById("nameP1").value != "" && document.getElementById("nameP2").value != ""){			
+			cambiarEstadoBotones(true);			
+			document.getElementById("sendPartida").hidden = true;
+			document.getElementById("sendFinPartida").hidden = false;
+			c = document.getElementById('miCanvas');
+			ctx = c.getContext('2d');
+			ctx.clearRect(0,0,c.width, c.height);
+			ctx.font = "25px Arial";
+			
+			espacioTexto = 50;
+			tamCasilla = (c.width -espacioTexto*2) / 3;
+			jugadorAct = 1; //podrá ser 1 o 2
+			casillas = [[false, 0], [false, 0], [false, 0], [false, 0], [false, 0], [false, 0], [false, 0], [false, 0], [false, 0]];
+			ganado = false;
+			fin = false;
+			casillasOcupadas = 0;
+			//llamadas iniciales
+			dibujaTablero();
+			//se añade el listener de pulsación
+			c.addEventListener('mouseup', jugada, true);
+			
+			//se muestra por pantalla quién está jugando
+			var nomJugador = document.getElementById("nameP"+jugadorAct).value;
+			ctx.fillText(nomJugador+"'s turn", espacioTexto, c.height-20);
+		}
+	}
+	//reinicia los parámetros
+	function finPartida(borrar){
+		if(borrar){
+			ctx.clearRect(0,0,c.width, c.height);
+			ctx.font = "20px Arial";
+			ctx.fillText("Empty board.", 160, 200);
+			ctx.fillText("Introduce your names and start game!", 20, 250);
+		}
+		c.removeEventListener('mouseup', jugada, true);
+		cambiarEstadoBotones(false);
+		document.getElementById("sendFinPartida").hidden = true;
+		document.getElementById("sendPartida").hidden = false;
+	}
+	
+	function cambiarEstadoBotones(estado){
+		document.getElementById('nameP1').disabled = estado;
+		document.getElementById("nameP2").disabled = estado;
+		document.getElementsByName("tipoFicha1")[0].disabled = estado;
+		document.getElementsByName("tipoFicha2")[0].disabled = estado;
+		document.getElementsByName("tipoFicha1")[1].disabled = estado;
+		document.getElementsByName("tipoFicha2")[1].disabled = estado;
+		document.getElementById("miColorR1").disabled = estado;
+		document.getElementById("miColorL1").disabled = estado;
+		document.getElementById("miColorR2T").disabled = estado;
+		document.getElementById("miColorL2T").disabled = estado;
+		document.getElementById("miColorR2C").disabled = estado;
+		document.getElementById("miColorL2C").disabled = estado;
+	}
+	
+	function dibujaTablero () {
+
+		ctx.lineWidth = 5;		
+		ctx.strokeStyle = '#aaa';
+		ctx.lineCap = 'round';
+		
+		for (var i = 1; i <= 2; i++) 
+		{  
+			//horizontal
+			ctx.beginPath();		
+			ctx.moveTo(espacioTexto, i * tamCasilla + espacioTexto);
+			ctx.lineTo(c.width - espacioTexto, i * tamCasilla + espacioTexto);
+			ctx.stroke();
+			ctx.closePath();
+			//vertical
+			ctx.beginPath();	
+			ctx.moveTo(i * tamCasilla + espacioTexto, espacioTexto);
+			ctx.lineTo(i * tamCasilla + espacioTexto, c.width - espacioTexto);
+			ctx.stroke();
+			ctx.closePath();
+		}
+	}
+
+	//obtiene la posición del ratón
+	function getMousePosition (ev) {	  
+		var rect = c.getBoundingClientRect();
+		var x = ev.clientX - rect.left;
+		var y = ev.clientY - rect.top;	   
+		return{x:x, y:y}
+	}
+	
+	//Función a la que se llama cada vez que se pulsa el ratón
+	function jugada(ev) {
+		//obtener posición del ratón
+		var posRaton = getMousePosition(ev);
+		//pintar la nueva casilla
+		var cambiada = rellenaCasilla(posRaton);
+		
+		//si la casilla no estaba ocupada
+		if(cambiada){
+			if(ganado){ //si alguien ha ganado
+				//se muestra por pantalla quién está jugando
+				ctx.clearRect(0,c.height-49,c.width, c.height);
+				ctx.fillStyle = "black";
+				var nomJugador = document.getElementById("nameP"+jugadorAct).value;
+				ctx.fillText(nomJugador+" has wone!", espacioTexto, 40);
+				finPartida(false);
+			}
+			else if(casillasOcupadas == 9){ //si ya no quedan huecos
+				ctx.clearRect(0,c.height-49,c.width, c.height);
+				ctx.clearRect(0,0,c.width, espacioTexto-1);
+				ctx.fillStyle = "black";
+				ctx.fillText("There are no holes left, tie", espacioTexto, 40);
+				finPartida(false);
+			}
+			else{
+				//se cambia de jugador en cada pulsación
+				if (jugadorAct == 1) {
+					jugadorAct = 2;
+				}
+				else {
+					jugadorAct = 1;
+				}
+				//se muestra por pantalla quién está jugando
+				ctx.clearRect(0,c.height-49,c.width, c.height);
+				ctx.fillStyle = "black";
+				var nomJugador = document.getElementById("nameP"+jugadorAct).value;
+				ctx.fillText(nomJugador + "'s turn", espacioTexto, c.height-20);
+			}
+		}
+		
+	}
+	
+	//Se elige la casilla sobre la que se ha pulsado
+	function rellenaCasilla (posRaton) {
+		var coordX, coordY;
+		var cambiada = false; 
+		var casAct;
+		var i = 0;
+		var j = 0;
+		var encontrada = false; //se pone a true si se halla la casilla
+		while(i < 3 && !encontrada) {
+			while(j < 3 && !encontrada) {
+				coordX = i * tamCasilla + espacioTexto;
+				coordY = j * tamCasilla + espacioTexto;
+				
+				//Si se encuentra dentro de los límites de la casilla actual
+				if( posRaton.x >= coordX && posRaton.x <= coordX + tamCasilla &&
+					posRaton.y >= coordY && posRaton.y <= coordY + tamCasilla) 
+				{	
+					encontrada = true;
+					casAct = averiguaCasillaActual(i, j);
+					if(casillas[casAct][0] == false) //si no está ocupada
+					{
+						if (jugadorAct == 1) {							
+							casillas[casAct][0] = true; //ocupada
+							casillas[casAct][1] = 1; //JUGADOR1
+							jugadaJugador1(coordX, coordY);
+							//se comprueba si ha ganado un jugador o si se ha acabado
+							comprobarJugada(casAct, 1);
+						} 
+						else {
+							casillas[casAct][0] = true; //ocupada
+							casillas[casAct][1] = 2; //JUGADOR1
+							jugadaJugador2(coordX, coordY);
+							comprobarJugada(casAct, 2);
+						}
+						cambiada = true;
+						casillasOcupadas++;
+					}
+				}
+				j++;
+			}
+			i++;
+			j = 0;
+		}
+		return cambiada
+	}
+	
+	function comprobarJugada(casAct, jugador){
+		/*0 1 2
+		  3 4 5
+          6 7 8*/
+		if(casillas[0][1]==jugador && casillas[1][1]==jugador && casillas[2][1]== jugador)
+			ganado = true;
+		else if(casillas[3][1]==jugador && casillas[4][1]==jugador && casillas[5][1]== jugador)
+			ganado = true;
+		else if (casillas[6][1]== jugador && casillas[7][1]== jugador && casillas[8][1]== jugador)
+			ganado = true;
+		else if(casillas[0][1]==jugador && casillas[3][1]==jugador && casillas[6][1]== jugador)	
+			ganado = true;
+		else if (casillas[1][1]== jugador && casillas[4][1]== jugador && casillas[7][1]== jugador)
+			ganado = true;
+		else if(casillas[2][1]==jugador && casillas[5][1]==jugador && casillas[8][1]== jugador)	
+			ganado = true;
+		else if(casillas[0][1]==jugador && casillas[4][1]==jugador && casillas[8][1]== jugador)	
+			ganado = true;	
+		else if(casillas[2][1]==jugador && casillas[4][1]==jugador && casillas[6][1]== jugador)	
+			ganado = true;	
+	}
+		
+	//calcula cuál es la casilla sobre la que se está entre [0, 8]
+	function averiguaCasillaActual(i, j){
+	//i: x, j: y
+	/* 0 1 2
+       3 4 5
+	   6 7 8
+	*/
+		var casilla = 0;
+		if(i == 0){
+			switch (j){
+				case 0:
+					casilla = 0;
+					break;
+				case 1:
+					casilla = 3;
+					break;
+				case 2:
+					casilla = 6;
+					break;
+			}
+		}
+		else if(i == 1){
+			switch (j){
+				case 0:
+					casilla = 1;
+					break;
+				case 1:
+					casilla = 4;
+					break;
+				case 2:
+					casilla = 7;
+					break;
+			}
+		}
+		else if(i == 2){
+			switch (j){
+				case 0:
+					casilla = 2;
+					break;
+				case 1:
+					casilla = 5;
+					break;
+				case 2:
+					casilla = 8;
+					break;
+			}
+		}
+		return casilla;
+	}
+	
+	function jugadaJugador1(X, Y){
+		
+		tipo = document.getElementsByName("tipoFicha1");
+		var colorRelleno, colorLinea;
+		if(tipo[0].checked){ //rectángulo
+			colorRelleno = document.getElementById("miColorR1").value;
+			colorLinea = document.getElementById("miColorL1").value;			
+			ctx.lineWidth = 5;
+			ctx.strokeStyle = colorLinea;
+			ctx.fillStyle  = colorRelleno;	
+			ctx.beginPath();
+			ctx.rect(X+20,Y+20,tamCasilla-40,tamCasilla-40);
+			ctx.closePath();
+			ctx.stroke();
+			ctx.fill();			
+			
+		}
+		else{ //imagen
+			var img = document.getElementById("ficha1");
+			ctx.drawImage(img, X+20, Y+20, tamCasilla-40, tamCasilla-40);
+		}
+	}
+	function jugadaJugador2(X, Y){
+		tipo = document.getElementsByName("tipoFicha2");
+		var colorRelleno, colorLinea;
+		if(tipo[0].checked){ //triángulo
+			colorRelleno = document.getElementById("miColorR2T").value;
+			colorLinea = document.getElementById("miColorL2T").value;			
+			ctx.lineWidth = 5;
+			ctx.strokeStyle = colorLinea;
+			ctx.fillStyle  = colorRelleno;			
+			ctx.beginPath();
+			ctx.moveTo(X+tamCasilla/2, Y+20); //origen
+			ctx.lineTo(X+tamCasilla-20,Y+tamCasilla-20);
+			ctx.lineTo(X+20,Y+tamCasilla-20);			
+			ctx.closePath();
+			ctx.stroke();
+			ctx.fill();			
+			
+		}
+		else{ //círculo
+			colorRelleno = document.getElementById("miColorR2C").value;
+			colorLinea = document.getElementById("miColorL2C").value;
+			ctx.lineWidth = 5;
+			ctx.strokeStyle = colorLinea;
+			ctx.fillStyle  = colorRelleno;			
+			ctx.beginPath();			
+			ctx.arc(X+tamCasilla/2, Y+tamCasilla/2,tamCasilla/2-20,0,2*Math.PI);					
+			ctx.closePath();
+			ctx.stroke();
+			ctx.fill();	
+		}
+	}
+	function canvasIni(){
+		c = document.getElementById('miCanvas');
+		ctx = c.getContext('2d');
+		ctx.font = "20px Arial";
+		ctx.fillText("Empty board.", 160, 200);
+		ctx.fillText("Introduce your names and start game!", 20, 250);
+		
+		
+	}
+	</script>	
+</head>
+  
+<body onload = "canvasIni()">		
+	<header id="menu" class="menu">
+    	<div id="logo" class="logo"> 
+			<a href="../indexEn.html"><img src="../pics/logo.png" alt="Logo"></a>
+		</div>
+		<div class="idiomas"> 
+			<a href="../programacion_multimedia/canvas.html">Castellano</a>
+		</div>
+		<section>	 
+			<nav id="menuPrinc">
+				<ul class="children"> 
+					<li><a href="../indexEn.html"><span class="icon-home3"></span>Introduction</a></li>
+					<li class="submenu">
+						<a href="#"><span class="icon-profile"></span>Portfolio<span class="caret icon-arrow-down2" ></span></a>
+						<ul class="children">
+							<li><a href="../video_game_development.html">Video Game Development</a></li>
+							<li><a href="../advanced_animation.html">Advanced Animation Techniques</a></li>
+							<li><a href="../animation.html">Computer Animation</a></li>
+							<li><a href="../simulation.html">Computer Simulation </a></li>
+							<li><a href="../multimedia_programming.html">Multimedia Programming</a></li>
+						</ul>
+					</li>
+				</ul>
+			</nav>
+		</section>	
+    </header>
+	
+	<aside class="vertical" id="verticalGeneral">
+		<ul>
+			<li id="TitleMenuAside">Portfolio</li>
+			<li><a href="audio_En.html">Audio</a></li>
+			<li><a href="canvas_En.html">Canvas</a></li>		
+			<li><a href="x3dom_En.html">X3DOM</a></li>		
+			<li><a href="threejs_En.html">Threejs</a></li>	
+			<li><a href="d3js_En.html">D3js</a></li>	
+		</ul>
+	</aside>
+			
+	<main id="cuerpo" class="cuerpo">
+    	<h1>Multimedia programming</h1>
+    	<h2>Canvas: TIC-TAC-TOE</h2>
+		<img id="ficha1" width="100" height="100" src="../pics/prom/canvas/ficha1.png" alt="ficha 1" hidden>
+		<div id="juego">
+			<div id="playersbox">
+				
+					<div>
+						<p><b>Name of the players</b></p>
+						<span class="icon-user"></span>
+						<input type="text" class="namePlayer"  id="nameP1" placeholder="Name of player 1" required /> <br/>
+						
+						<span class="icon-user"></span>
+						<input type="text" class="namePlayer"  id="nameP2" placeholder="Name of player 2" required/> <br/>
+					</div>
+					<hr/>
+					<div id="player1" class="players">
+						<p><b>Player 1 settings</b></p>
+						<input type="radio" name="tipoFicha1" value="rectangulo" onclick="muestraColor('ColorR1')"> Rectangle<br>
+						<div id="ColorR1" hidden>
+							<input type="color" id="miColorR1" name="miColorR1" value="#6AAECD"> Fill color <br/>
+							<input type="color" id="miColorL1" name="miColorL1" value="#FFCBC0"> Border color
+						</div>
+						<input type="radio" name="tipoFicha1" value="imagen" checked onclick="escondeColor('ColorR1')"> Image<br>
+					</div>  
+					
+					<div id="player2" class="players">
+						<p><b>Player 2 settings</b></p>
+						<input type="radio" name="tipoFicha2" value="triangulo" onclick="escondeColor('ColorR2C'), muestraColor('ColorR2T')"> Triangle<br>
+						<div id="ColorR2T" hidden>
+							<input type="color" id="miColorR2T" name="miColorR1" value="#FFCBC0"> Fill color <br/>
+							<input type="color" id="miColorL2T" name="miColorL2T" value="#6AAECD"> Border color
+						</div> 
+						
+						<input type="radio" name="tipoFicha2" value="circulo" checked onclick="escondeColor('ColorR2T'), muestraColor('ColorR2C')"> Circle<br>
+						<div id="ColorR2C">
+							<input type="color" id="miColorR2C" name="miColorR2C" value="#FFCBC0"> Fill color <br/> 
+							<input type="color" id="miColorL2C" name="miColorL2T" value="#6AAECD"> Border color
+						</div> 				
+					</div>
+					<input type="submit" id="sendPartida"  value="Start game" onclick="inicioPartida()"/> <br/>
+					<input type="submit" id="sendFinPartida"  value="Finish game" onclick="finPartida(true)" hidden/> <br/>
+			</div>
+			
+			<div id="tablerobox">
+				<canvas id="miCanvas" width="450" height="450" style="border: 2px solid gray; border-radius: 10px; box-shadow: 0px 5px 10px #B5C1C5;">
+					
+				</canvas>
+			</div>
+		</div>
+		<span class="ir-arriba icon-arrow-up2"></span>				
+		<br/><br/><br/><br/><br/><br/> 
+		<footer id="footercontainer">
+			<div id="authors"> Clara Peñalva Carbonell
+				<div id="socialFooter">
+					<a href="https://www.youtube.com/channel/UCPH4xYbSNIHqG4LUHQTgQAw" target="_blank"><span class="icon-youtube4"></span> </a>
+					<a href="https://es.linkedin.com/in/clara-penalva" target="_blank"><span class="icon-linkedin"></span> </a>
+				</div>
+			</div>
+		</footer> 
+	</main>
+</body>
+</html>
